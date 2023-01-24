@@ -5,27 +5,15 @@ import 'package:temp/temp_model.dart';
 
 void get clrscr => stdout.write(Process.runSync("clear", []).stdout);
 
-void calculate() {
-  // int i = 11;
-  // var m = i.toString();
-  // var n = int.parse(m);
-}
-
-void encode(dynamic i) {
-  var m = jsonEncode(i);
-  var n = jsonDecode(m);
-  print('${n.runtimeType}');
-}
-
 AllThings ts = AllThings(things: [
   Thing(done: false, stuff: "stuff1"),
 ]);
 
 class FileThing {
-  static final FileThing _instance = FileThing._();
   factory FileThing() => _instance;
+  static final FileThing _instance = FileThing._();
   FileThing._() {
-    home = Platform.environment["HOME"] ?? ".";
+    home = getGitRoot() ?? Platform.environment["HOME"] ?? ".";
     file = File('$home/.thing');
   }
 
@@ -51,6 +39,8 @@ FileThing get fio => FileThing();
 
 void inputLoop() {
   clrscr;
+  print("TASKS FOR => ${title ?? "HOME"}\n");
+
   try {
     if (fio.file.existsSync()) {
       Map<String, dynamic> json = jsonDecode(fio.readFile());
@@ -138,3 +128,19 @@ handleParsingError() {
     handleParsingError();
   }
 }
+
+String? getGitRoot({bool absolute = true}) {
+  dynamic git = Process.runSync("git", ["rev-parse", "--show-toplevel"])
+      .stdout
+      .toString()
+      .trim();
+  dynamic branch = Process.runSync("git", ["rev-parse", "--abbrev-ref", "HEAD"])
+      .stdout
+      .toString()
+      .trim();
+  if (git == "") return null;
+  if (absolute) return git;
+  return "${git.toString().split('/').last}[${branch}]";
+}
+
+String? title = getGitRoot(absolute: false);
